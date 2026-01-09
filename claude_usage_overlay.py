@@ -465,12 +465,15 @@ class ClaudeUsageBar:
         if time_left_seconds <= 0:
             return "Resetting soon..."
         
-        hours = int(time_left_seconds // 3600)
+        days = int(time_left_seconds // 86400)
+        hours = int((time_left_seconds % 86400) // 3600)
         minutes = int((time_left_seconds % 3600) // 60)
         seconds = int(time_left_seconds % 60)
         
         # Format based on duration
-        if hours > 0:
+        if days > 0:
+            return f"{days}d {hours}h"
+        elif hours > 0:
             return f"{hours}h {minutes}m"
         elif minutes > 0:
             return f"{minutes}m {seconds}s"
@@ -673,13 +676,26 @@ class ClaudeUsageBar:
     def update_progress(self):
         """Update UI with latest usage data"""
         if not self.usage_data:
+            print("No usage data available")
             return
         
+        print(f"Updating progress with data: {self.usage_data}")
+        
         try:
+            try:
+                from dateutil import parser as date_parser
+            except ImportError:
+                print("dateutil not installed, installing...")
+                import subprocess
+                subprocess.check_call([sys.executable, "-m", "pip", "install", "python-dateutil"])
+                from dateutil import parser as date_parser
+            
             # Extract 5-hour usage
             five_hour = self.usage_data.get('five_hour', {})
             five_hour_utilization = five_hour.get('utilization', 0.0)
             five_hour_resets_at = five_hour.get('resets_at')
+            
+            print(f"5-hour: {five_hour_utilization}%, resets at {five_hour_resets_at}")
             
             # Display 5-hour usage
             self.five_hour_usage_label.config(text=f"{five_hour_utilization:.1f}% used")
@@ -699,28 +715,35 @@ class ClaudeUsageBar:
             # Update 5-hour reset timer
             if five_hour_resets_at:
                 try:
-                    from dateutil import parser
-                    reset_time = parser.parse(five_hour_resets_at)
+                    reset_time = date_parser.parse(five_hour_resets_at)
                     now = datetime.now(reset_time.tzinfo)
                     time_left = reset_time - now
                     
+                    print(f"5-hour time left: {time_left.total_seconds()} seconds")
+                    
                     if time_left.total_seconds() > 0:
                         time_str = self.format_time_remaining(time_left.total_seconds())
+                        print(f"5-hour formatted: {time_str}")
                         self.five_hour_reset_label.config(text=f"Resets in: {time_str}")
                     else:
                         self.five_hour_reset_label.config(text="Resetting soon...")
-                except:
-                    self.five_hour_reset_label.config(text=f"Resets: {five_hour_resets_at}")
+                except Exception as e:
+                    print(f"Error parsing 5-hour reset time: {e}")
+                    import traceback
+                    traceback.print_exc()
+                    self.five_hour_reset_label.config(text="Reset time error")
             else:
                 if five_hour_utilization == 0:
                     self.five_hour_reset_label.config(text="No active period")
                 else:
                     self.five_hour_reset_label.config(text="Reset time unavailable")
             
-            # Extract weekly usage
-            weekly = self.usage_data.get('weekly', {})
+            # Extract weekly usage (note: API uses 'seven_day' not 'weekly')
+            weekly = self.usage_data.get('seven_day', {})
             weekly_utilization = weekly.get('utilization', 0.0)
             weekly_resets_at = weekly.get('resets_at')
+            
+            print(f"Weekly: {weekly_utilization}%, resets at {weekly_resets_at}")
             
             # Display weekly usage
             self.weekly_usage_label.config(text=f"{weekly_utilization:.1f}% used")
@@ -740,18 +763,23 @@ class ClaudeUsageBar:
             # Update weekly reset timer
             if weekly_resets_at:
                 try:
-                    from dateutil import parser
-                    reset_time = parser.parse(weekly_resets_at)
+                    reset_time = date_parser.parse(weekly_resets_at)
                     now = datetime.now(reset_time.tzinfo)
                     time_left = reset_time - now
                     
+                    print(f"Weekly time left: {time_left.total_seconds()} seconds")
+                    
                     if time_left.total_seconds() > 0:
                         time_str = self.format_time_remaining(time_left.total_seconds())
+                        print(f"Weekly formatted: {time_str}")
                         self.weekly_reset_label.config(text=f"Resets in: {time_str}")
                     else:
                         self.weekly_reset_label.config(text="Resetting soon...")
-                except:
-                    self.weekly_reset_label.config(text=f"Resets: {weekly_resets_at}")
+                except Exception as e:
+                    print(f"Error parsing weekly reset time: {e}")
+                    import traceback
+                    traceback.print_exc()
+                    self.weekly_reset_label.config(text="Reset time error")
             else:
                 if weekly_utilization == 0:
                     self.weekly_reset_label.config(text="No active period")
