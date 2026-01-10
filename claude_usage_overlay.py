@@ -220,24 +220,15 @@ class ClaudeUsageBar:
             max_wait = 300  # 5 minutes
             elapsed = 0
             
-            print("Waiting for sessionKey cookie...")
-            
             while elapsed < max_wait and not session_key and self.login_in_progress:
                 try:
                     # Check cookies
                     cookies = self.driver.get_cookies()
-                    print(f"[{elapsed}s] Checking cookies... Found {len(cookies)} cookies")
-                    
-                    # Print all cookie names for debugging
-                    cookie_names = [c['name'] for c in cookies]
-                    print(f"Cookie names: {cookie_names}")
                     
                     for cookie in cookies:
                         if cookie['name'] == 'sessionKey':
                             session_key = cookie['value']
                             all_cookies = cookies  # Save ALL cookies
-                            print(f"✓ Found sessionKey: {session_key[:20]}...")
-                            print(f"Captured {len(all_cookies)} total cookies")
                             break
                     
                     if session_key:
@@ -246,46 +237,34 @@ class ClaudeUsageBar:
                     # Check if browser was closed by user
                     try:
                         url = self.driver.current_url
-                        print(f"Current URL: {url}")
-                    except Exception as url_error:
-                        print(f"Browser closed by user: {url_error}")
+                    except:
                         break
                     
                     time.sleep(2)
                     elapsed += 2
                     
-                except Exception as e:
-                    print(f"Error checking cookies: {e}")
-                    import traceback
-                    traceback.print_exc()
+                except:
                     break
-            
-            print(f"Cookie check loop ended. Session key found: {session_key is not None}")
             
             # Close browser
             if self.driver:
                 try:
-                    print("Closing browser...")
                     self.driver.quit()
-                    print("Browser closed successfully")
-                except Exception as quit_error:
-                    print(f"Error closing browser: {quit_error}")
+                except:
+                    pass
                 finally:
                     self.driver = None
             
             if session_key:
                 # Success! Save session key AND all cookies
-                print(f"Saving session key: {session_key[:20]}...")
                 self.config['session_key'] = session_key
                 
                 # Save all cookies as a cookie string
                 if all_cookies:
                     cookie_string = '; '.join([f"{c['name']}={c['value']}" for c in all_cookies])
                     self.config['cookie_string'] = cookie_string
-                    print(f"Saved {len(all_cookies)} cookies")
                 
                 self.save_config()
-                print("Config saved!")
                 
                 self.root.after(0, lambda: [
                     self.status_label.config(text="✓ Login successful!", fg='#44ff44'),
@@ -297,23 +276,16 @@ class ClaudeUsageBar:
                     self.login_dialog.destroy() if hasattr(self, 'login_dialog') else None,
                     self.start_polling()
                 ])
-                print("Starting polling...")
             else:
                 # Timeout or closed
-                print("No session key found - login cancelled or timeout")
                 self.root.after(0, lambda: [
                     self.status_label.config(text="Login cancelled or timeout. Try again.", fg='#ff4444'),
                     self.login_button.config(state='normal', text="Sign In")
                 ])
             
             self.login_in_progress = False
-            print("Login process complete")
         
         except Exception as e:
-            print(f"Login error: {e}")
-            import traceback
-            traceback.print_exc()
-            
             if self.driver:
                 try:
                     self.driver.quit()
@@ -330,7 +302,6 @@ class ClaudeUsageBar:
     def fetch_usage_data(self):
         """Fetch usage data from Claude API using requests with cloudflare bypass"""
         if not self.config.get('session_key'):
-            print("No session key available")
             return None
             
         try:
@@ -338,7 +309,6 @@ class ClaudeUsageBar:
             try:
                 import cloudscraper
             except ImportError:
-                print("Installing cloudscraper...")
                 import subprocess
                 import sys
                 subprocess.check_call([sys.executable, "-m", "pip", "install", "cloudscraper"])
@@ -375,7 +345,6 @@ class ClaudeUsageBar:
                     name, value = cookie_pair.split('=', 1)
                     scraper.cookies.set(name, value, domain='claude.ai')
             
-            print("Fetching organizations with cloudscraper...")
             # Get organizations
             response = scraper.get(
                 'https://claude.ai/api/organizations',
@@ -383,47 +352,30 @@ class ClaudeUsageBar:
                 timeout=15
             )
             
-            print(f"Organizations response: {response.status_code}")
-            
             if response.status_code == 200:
                 orgs = response.json()
-                print(f"Found {len(orgs)} organizations")
                 
                 if orgs and len(orgs) > 0:
                     org_id = orgs[0].get('uuid')
-                    print(f"Using org: {org_id}")
                     
                     # Get usage
-                    print("Fetching usage data...")
                     usage_response = scraper.get(
                         f'https://claude.ai/api/organizations/{org_id}/usage',
                         headers=headers,
                         timeout=15
                     )
                     
-                    print(f"Usage response: {usage_response.status_code}")
-                    
                     if usage_response.status_code == 200:
                         usage_data = usage_response.json()
-                        print(f"Usage data: {usage_data}")
                         return usage_data
             
             elif response.status_code == 401:
-                print("Session expired (401)")
                 self.root.after(0, self.handle_auth_error)
                 return None
-            elif response.status_code == 403:
-                print("Forbidden (403)")
-                print(f"Response snippet: {response.text[:500]}")
-                return None
             
-            print("No usage data available")
             return None
                 
         except Exception as e:
-            print(f"Error fetching usage: {e}")
-            import traceback
-            traceback.print_exc()
             return None
     
     def handle_auth_error(self):
@@ -465,15 +417,12 @@ class ClaudeUsageBar:
         if time_left_seconds <= 0:
             return "Resetting soon..."
         
-        days = int(time_left_seconds // 86400)
-        hours = int((time_left_seconds % 86400) // 3600)
+        hours = int(time_left_seconds // 3600)
         minutes = int((time_left_seconds % 3600) // 60)
         seconds = int(time_left_seconds % 60)
         
         # Format based on duration
-        if days > 0:
-            return f"{days}d {hours}h"
-        elif hours > 0:
+        if hours > 0:
             return f"{hours}h {minutes}m"
         elif minutes > 0:
             return f"{minutes}m {seconds}s"
@@ -676,16 +625,12 @@ class ClaudeUsageBar:
     def update_progress(self):
         """Update UI with latest usage data"""
         if not self.usage_data:
-            print("No usage data available")
             return
-        
-        print(f"Updating progress with data: {self.usage_data}")
         
         try:
             try:
                 from dateutil import parser as date_parser
             except ImportError:
-                print("dateutil not installed, installing...")
                 import subprocess
                 subprocess.check_call([sys.executable, "-m", "pip", "install", "python-dateutil"])
                 from dateutil import parser as date_parser
@@ -694,8 +639,6 @@ class ClaudeUsageBar:
             five_hour = self.usage_data.get('five_hour', {})
             five_hour_utilization = five_hour.get('utilization', 0.0)
             five_hour_resets_at = five_hour.get('resets_at')
-            
-            print(f"5-hour: {five_hour_utilization}%, resets at {five_hour_resets_at}")
             
             # Display 5-hour usage
             self.five_hour_usage_label.config(text=f"{five_hour_utilization:.1f}% used")
@@ -719,18 +662,12 @@ class ClaudeUsageBar:
                     now = datetime.now(reset_time.tzinfo)
                     time_left = reset_time - now
                     
-                    print(f"5-hour time left: {time_left.total_seconds()} seconds")
-                    
                     if time_left.total_seconds() > 0:
                         time_str = self.format_time_remaining(time_left.total_seconds())
-                        print(f"5-hour formatted: {time_str}")
                         self.five_hour_reset_label.config(text=f"Resets in: {time_str}")
                     else:
                         self.five_hour_reset_label.config(text="Resetting soon...")
-                except Exception as e:
-                    print(f"Error parsing 5-hour reset time: {e}")
-                    import traceback
-                    traceback.print_exc()
+                except:
                     self.five_hour_reset_label.config(text="Reset time error")
             else:
                 if five_hour_utilization == 0:
@@ -742,8 +679,6 @@ class ClaudeUsageBar:
             weekly = self.usage_data.get('seven_day', {})
             weekly_utilization = weekly.get('utilization', 0.0)
             weekly_resets_at = weekly.get('resets_at')
-            
-            print(f"Weekly: {weekly_utilization}%, resets at {weekly_resets_at}")
             
             # Display weekly usage
             self.weekly_usage_label.config(text=f"{weekly_utilization:.1f}% used")
@@ -767,18 +702,12 @@ class ClaudeUsageBar:
                     now = datetime.now(reset_time.tzinfo)
                     time_left = reset_time - now
                     
-                    print(f"Weekly time left: {time_left.total_seconds()} seconds")
-                    
                     if time_left.total_seconds() > 0:
                         time_str = self.format_time_remaining(time_left.total_seconds())
-                        print(f"Weekly formatted: {time_str}")
                         self.weekly_reset_label.config(text=f"Resets in: {time_str}")
                     else:
                         self.weekly_reset_label.config(text="Resetting soon...")
-                except Exception as e:
-                    print(f"Error parsing weekly reset time: {e}")
-                    import traceback
-                    traceback.print_exc()
+                except:
                     self.weekly_reset_label.config(text="Reset time error")
             else:
                 if weekly_utilization == 0:
@@ -787,9 +716,6 @@ class ClaudeUsageBar:
                     self.weekly_reset_label.config(text="Reset time unavailable")
                 
         except Exception as e:
-            print(f"Error updating progress: {e}")
-            import traceback
-            traceback.print_exc()
             self.five_hour_usage_label.config(text="Error displaying usage")
             self.weekly_usage_label.config(text="Error displaying usage")
         
