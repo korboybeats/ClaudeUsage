@@ -1,8 +1,10 @@
 # 📊 ClaudeUsage Tracker
 
-A lightweight, open-source desktop widget to monitor your Claude.ai message limits in real-time. Designed to stay out of your way while keeping you informed.
+A lightweight, open-source desktop widget to monitor your Claude.ai message limits in real-time.
 
 ![Showcase Image](showcase.png)
+
+
 
 ## ✨ Features
 
