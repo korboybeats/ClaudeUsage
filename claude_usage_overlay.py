@@ -963,7 +963,7 @@ class ClaudeUsageBar:
         ).pack(pady=(20, 5))
         
         # Show session key snippet
-        session_key = self.config.get('session_key', 'Not logged in')
+        session_key = self.config.get('session_key') or 'Not logged in'
         display_key = f"{session_key[:15]}..." if len(session_key) > 15 else session_key
         
         tk.Label(
