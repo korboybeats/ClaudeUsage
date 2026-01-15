@@ -446,7 +446,7 @@ class ClaudeUsageBar:
         self.header.pack(fill='x', padx=6, pady=(6, 0))
         self.header.pack_propagate(False)
         
-        # Clickthrough toggle button (always on top left)
+        # Clickthrough toggle button (always interactive)
         self.clickthrough_btn = tk.Label(
             self.header,
             text="👆",
@@ -472,7 +472,6 @@ class ClaudeUsageBar:
             bg='#2a2a2a',
             cursor='hand2'
         )
-        # Fixed title padding to ensure right-side buttons aren't pushed off
         self.title_label.pack(side='left', padx=(4, 4), pady=4)
         
         # Dragging
@@ -482,12 +481,12 @@ class ClaudeUsageBar:
             widget.bind('<ButtonRelease-1>', self.stop_drag)
         
         # Buttons
-        btn_frame = tk.Frame(self.header, bg='#2a2a2a')
-        btn_frame.pack(side='right')
+        self.btn_frame = tk.Frame(self.header, bg='#2a2a2a')
+        self.btn_frame.pack(side='right')
         
-        # Refresh icon - Using \u21BB and specific Symbol font for reliable rendering
+        # Refresh
         self.refresh_btn = tk.Label(
-            btn_frame,
+            self.btn_frame,
             text="\u21BB", 
             font=('Segoe UI Symbol', 11, 'bold'),
             fg='#888888',
@@ -497,12 +496,12 @@ class ClaudeUsageBar:
         )
         self.refresh_btn.pack(side='left', padx=2)
         self.refresh_btn.bind('<Button-1>', self.manual_refresh)
-        self.refresh_btn.bind('<Enter>', lambda e: self.refresh_btn.config(fg='#CC785C'))
-        self.refresh_btn.bind('<Leave>', lambda e: self.refresh_btn.config(fg='#888888'))
+        self.refresh_btn.bind('<Enter>', lambda e: self.on_icon_hover(self.refresh_btn, '#CC785C'))
+        self.refresh_btn.bind('<Leave>', lambda e: self.on_icon_leave(self.refresh_btn, '#888888'))
         
         # Settings
         self.settings_btn = tk.Label(
-            btn_frame,
+            self.btn_frame,
             text="⚙",
             font=('Segoe UI', 10),
             fg='#888888',
@@ -512,12 +511,12 @@ class ClaudeUsageBar:
         )
         self.settings_btn.pack(side='left', padx=2)
         self.settings_btn.bind('<Button-1>', self.show_settings)
-        self.settings_btn.bind('<Enter>', lambda e: self.settings_btn.config(fg='#ffffff'))
-        self.settings_btn.bind('<Leave>', lambda e: self.settings_btn.config(fg='#888888'))
+        self.settings_btn.bind('<Enter>', lambda e: self.on_icon_hover(self.settings_btn, '#ffffff'))
+        self.settings_btn.bind('<Leave>', lambda e: self.on_icon_leave(self.settings_btn, '#888888'))
         
         # Close
         self.close_btn = tk.Label(
-            btn_frame,
+            self.btn_frame,
             text="×",
             font=('Segoe UI', 13, 'bold'),
             fg='#888888',
@@ -527,16 +526,16 @@ class ClaudeUsageBar:
         )
         self.close_btn.pack(side='left', padx=2)
         self.close_btn.bind('<Button-1>', self.on_close)
-        self.close_btn.bind('<Enter>', lambda e: self.close_btn.config(fg='#ff4444'))
-        self.close_btn.bind('<Leave>', lambda e: self.close_btn.config(fg='#888888'))
+        self.close_btn.bind('<Enter>', lambda e: self.on_icon_hover(self.close_btn, '#ff4444'))
+        self.close_btn.bind('<Leave>', lambda e: self.on_icon_leave(self.close_btn, '#888888'))
         
         # Content
-        content = tk.Frame(self.main_frame, bg='#1a1a1a')
-        content.pack(fill='x', padx=8, pady=8)
+        self.content_frame = tk.Frame(self.main_frame, bg='#1a1a1a')
+        self.content_frame.pack(fill='x', padx=8, pady=8)
         
         # 5-Hour Usage section
         tk.Label(
-            content,
+            self.content_frame,
             text="5-Hour Limit",
             font=('Segoe UI', 8, 'bold'),
             fg='#888888',
@@ -545,7 +544,7 @@ class ClaudeUsageBar:
         ).pack(fill='x', pady=(0, 2))
         
         self.five_hour_usage_label = tk.Label(
-            content,
+            self.content_frame,
             text="Loading...",
             font=('Segoe UI', 9),
             fg='#cccccc',
@@ -555,7 +554,7 @@ class ClaudeUsageBar:
         self.five_hour_usage_label.pack(fill='x', pady=(0, 2))
         
         # 5-Hour Progress bar
-        five_hour_progress_bg = tk.Frame(content, bg='#2a2a2a', height=12)
+        five_hour_progress_bg = tk.Frame(self.content_frame, bg='#2a2a2a', height=12)
         five_hour_progress_bg.pack(fill='x', pady=(0, 2))
         five_hour_progress_bg.pack_propagate(False)
         
@@ -563,7 +562,7 @@ class ClaudeUsageBar:
         self.five_hour_progress_fill.place(x=0, y=0, relheight=1, width=0)
         
         self.five_hour_reset_label = tk.Label(
-            content,
+            self.content_frame,
             text="Resets in: --",
             font=('Segoe UI', 7),
             fg='#666666',
@@ -573,12 +572,12 @@ class ClaudeUsageBar:
         self.five_hour_reset_label.pack(fill='x', pady=(0, 10))
         
         # Separator
-        separator = tk.Frame(content, bg='#333333', height=1)
-        separator.pack(fill='x', pady=(0, 8))
+        self.separator = tk.Frame(self.content_frame, bg='#333333', height=1)
+        self.separator.pack(fill='x', pady=(0, 8))
         
         # Weekly Usage section
         tk.Label(
-            content,
+            self.content_frame,
             text="Weekly Limit",
             font=('Segoe UI', 8, 'bold'),
             fg='#888888',
@@ -587,7 +586,7 @@ class ClaudeUsageBar:
         ).pack(fill='x', pady=(0, 2))
         
         self.weekly_usage_label = tk.Label(
-            content,
+            self.content_frame,
             text="Loading...",
             font=('Segoe UI', 9),
             fg='#cccccc',
@@ -597,7 +596,7 @@ class ClaudeUsageBar:
         self.weekly_usage_label.pack(fill='x', pady=(0, 2))
         
         # Weekly Progress bar
-        weekly_progress_bg = tk.Frame(content, bg='#2a2a2a', height=12)
+        weekly_progress_bg = tk.Frame(self.content_frame, bg='#2a2a2a', height=12)
         weekly_progress_bg.pack(fill='x', pady=(0, 2))
         weekly_progress_bg.pack_propagate(False)
         
@@ -605,7 +604,7 @@ class ClaudeUsageBar:
         self.weekly_progress_fill.place(x=0, y=0, relheight=1, width=0)
         
         self.weekly_reset_label = tk.Label(
-            content,
+            self.content_frame,
             text="Resets in: --",
             font=('Segoe UI', 7),
             fg='#666666',
@@ -617,11 +616,22 @@ class ClaudeUsageBar:
         # Set opacity
         self.root.attributes('-alpha', self.config['opacity'])
         self.root.geometry('300x240')
+
+    def on_icon_hover(self, widget, active_color):
+        """Standard hover animation, disabled if clickthrough is on"""
+        if not self.clickthrough_enabled:
+            widget.config(fg=active_color)
+
+    def on_icon_leave(self, widget, default_color):
+        """Standard leave animation, disabled if clickthrough is on"""
+        if not self.clickthrough_enabled:
+            widget.config(fg=default_color)
     
     def start_drag(self, event):
-        self.dragging = True
-        self.drag_x = event.x_root - self.root.winfo_x()
-        self.drag_y = event.y_root - self.root.winfo_y()
+        if not self.clickthrough_enabled:
+            self.dragging = True
+            self.drag_x = event.x_root - self.root.winfo_x()
+            self.drag_y = event.y_root - self.root.winfo_y()
     
     def on_drag(self, event):
         if self.dragging:
@@ -744,6 +754,7 @@ class ClaudeUsageBar:
     
     def manual_refresh(self, event=None):
         """Manually trigger refresh"""
+        if self.clickthrough_enabled: return
         def refresh():
             data = self.fetch_usage_data()
             if data:
@@ -753,6 +764,7 @@ class ClaudeUsageBar:
         threading.Thread(target=refresh, daemon=True).start()
     
     def show_settings(self, event=None):
+        if self.clickthrough_enabled: return
         # Don't open multiple settings windows
         if self.settings_window and tk.Toplevel.winfo_exists(self.settings_window):
             self.settings_window.lift()
@@ -977,18 +989,42 @@ class ClaudeUsageBar:
             self.settings_window = None
     
     def toggle_clickthrough(self, event=None):
-        """Toggle clickthrough mode"""
+        """Toggle clickthrough mode - makes EVERYTHING clickthrough except the icon itself"""
         self.clickthrough_enabled = not self.clickthrough_enabled
         
         if self.clickthrough_enabled:
-            # Enable clickthrough - make window transparent to clicks
+            # Change the button color to something UNIQUE (not used anywhere else)
+            self.clickthrough_btn.config(bg='#2b2b2b', fg='#44ff44')
+            
+            # Change cursors for all non-interactive icons to standard arrow
+            for icon in [self.refresh_btn, self.settings_btn, self.close_btn, self.title_label]:
+                icon.config(cursor='arrow')
+            
+            # Make the main colors clickthrough
+            self.header.config(bg='#1a1a1a')
+            self.btn_frame.config(bg='#1a1a1a')
+            self.title_label.config(bg='#1a1a1a')
+            self.refresh_btn.config(bg='#1a1a1a')
+            self.settings_btn.config(bg='#1a1a1a')
+            self.close_btn.config(bg='#1a1a1a')
+            
+            # Now set the whole window's transparent color to the main background color
             self.root.wm_attributes('-transparentcolor', '#1a1a1a')
-            self.clickthrough_btn.config(fg='#44ff44')  # Green when active
-            self.clickthrough_btn.config(bg='#2a2a2a')
         else:
-            # Disable clickthrough
+            # Restore cursors to hand
+            for icon in [self.refresh_btn, self.settings_btn, self.close_btn, self.title_label]:
+                icon.config(cursor='hand2')
+                
+            # Restore original colors and remove transparency
+            self.clickthrough_btn.config(bg='#2a2a2a', fg='#888888')
+            self.header.config(bg='#2a2a2a')
+            self.btn_frame.config(bg='#2a2a2a')
+            self.title_label.config(bg='#2a2a2a')
+            self.refresh_btn.config(bg='#2a2a2a')
+            self.settings_btn.config(bg='#2a2a2a')
+            self.close_btn.config(bg='#2a2a2a')
+            
             self.root.wm_attributes('-transparentcolor', '')
-            self.clickthrough_btn.config(fg='#888888', bg='#2a2a2a')
     
     def on_clickthrough_hover(self, event):
         """Show tooltip on hover"""
@@ -1035,6 +1071,7 @@ class ClaudeUsageBar:
             self.clickthrough_btn.config(fg='#888888')
     
     def on_close(self, event=None):
+        if self.clickthrough_enabled: return
         self.polling_active = False
         if self.driver:
             try:
