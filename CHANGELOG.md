@@ -2,6 +2,46 @@
 
 ---
 
+## [3.0.0] - 2026-01-16
+**Author: korboybeats**
+
+### Major Changes
+- Complete rewrite from tkinter to PyQt5
+- Medium-weight desktop application (~56MB exe)
+
+### New Features
+
+#### Global Hotkeys
+- Customizable hotkeys for clickthrough, compact mode, and refresh
+- Capture hotkeys by clicking input and pressing key combo
+
+#### Sound Alerts
+- Sound notifications with usage alerts
+- Custom MP3/WAV file support
+- Volume control slider
+
+#### Usage Prediction
+- Shows estimated time to reach 100% usage
+- Toggle in settings to show/hide
+
+#### Appearance Settings
+- Adjustable font size
+- Adjustable progress bar height
+- Custom warning colors (yellow/red at high usage)
+- Text background opacity
+
+#### System
+- Start minimized option
+- Auto-install dependencies at startup
+- Browser-based auto login (undetected-chromedriver)
+
+### Technical Improvements
+- Optimized exe build with excluded unused modules
+- Cleaned up unused imports
+- Thread-safe hotkey handling via Qt signals
+
+---
+
 ## [2.0.0] - 2026-01-16
 **Author: Glxy97**
 

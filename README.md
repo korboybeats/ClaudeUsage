@@ -1,43 +1,57 @@
-# 📊 ClaudeUsage Tracker
+# Claude Usage Tracker (PyQt5)
 
-A lightweight, open-source desktop widget to monitor your Claude.ai message limits in real-time.
+A medium-weight desktop widget to monitor your Claude.ai message limits in real-time.
 
 ![Showcase Image](showcase.png)
 
+## Features
 
+- **Usage Tracking**: Monitor 5-hour and weekly usage limits
+- **Auto Login**: Browser-based automatic session key retrieval
+- **Clickthrough Mode**: Widget stays visible but clicks pass through
+- **Compact Mode**: Minimized view showing only 5-hour usage
+- **System Tray**: Minimize to tray, quick access menu
+- **Customizable**: Adjust opacity, colors, poll interval, and border styles
+- **API Status Indicator**: Shows connection status (green/yellow/red dot)
+- **Auto Retry**: Automatic retry logic on API failures
 
-## ✨ Features
+## Getting Started
 
-* **Usage Tracking**: Monitor both 5-hour and weekly usage limits at a glance.
-* **Clickthrough Mode**: Widget stays visible but becomes transparent to mouse clicks.
-* **Cloudflare Bypass**: Integrated automated login flow using `undetected-chromedriver` to securely handle authentication.
-* **Customizable UI**: Adjust opacity, modify update intervals, and position the widget anywhere on your screen.
-* **Persistent Session**: Log in once; the script securely stores your session token locally for a seamless "set and forget" experience.
+1. Install dependencies:
+   ```
+   pip install PyQt5 cloudscraper python-dateutil pystray pillow undetected-chromedriver
+   ```
 
----
+2. Run the script:
+   ```
+   python claude_usage_overlay_pyqt5.py
+   ```
 
-## 🚀 Getting Started
+3. When prompted, click **Sign In** - a browser will open automatically for login
 
-1. Navigate to the /dist dir
+## Controls
 
-2. Click the .exe  (feel free to recompile for security)
+| Icon | Action |
+|:----:|--------|
+| **👆** | Toggle clickthrough mode |
+| **─** | Toggle compact mode |
+| **⟲** | Manual refresh |
+| **⚙** | Settings |
+| **×** | Close (or minimize to tray) |
 
-3. It will take a while, and open a browser (cloudflare bypass - +- 20 seconds)
+## Building .exe
 
-4. Sign in to Claude like usual (check you're on the official website)
+To compile to a standalone executable:
 
----
+```bash
+pip install pyinstaller
+python build_exe.py
+```
 
-## 🛠 Controls
+The .exe will be in the `dist/` folder.
 
-| Icon | Action | Description |
-| :--- | :--- | :--- |
-| **👆** | **Toggle Clickthrough** | Makes the widget transparent to clicks. Only this icon remains interactive. |
-| **⟳** | **Manual Refresh** | Forces an immediate update of your usage data. |
-| **⚙** | **Settings** | Adjust window opacity and the background polling interval. |
-| **×** | **Close** | Safely exits the application and stops all background threads. |
+## Requirements
 
-> **Note**: Dragging the widget is disabled while **Clickthrough Mode** is active to prevent accidental movement.
-
-
-**If you find this tool useful, please consider giving it a ⭐ on GitHub!**
+- Python 3.8+
+- Windows (uses Windows API for clickthrough)
+- Chrome browser (for Auto Login feature)

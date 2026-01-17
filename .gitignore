@@ -183,8 +183,10 @@ cython_debug/
 .claude/
 tmpclaude-*
 
-# Distribution (exe files)
-dist/
+# Build artifacts
+app_icon.ico
+build/
+*.spec
 
 # IDE
 .idea/
